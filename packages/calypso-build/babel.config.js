@@ -1,9 +1,20 @@
+/** @format */
+
+const isCalypsoClient = process.env.CALYPSO_CLIENT === 'true';
+const isBrowser = isCalypsoClient || 'true' === process.env.TARGET_BROWSER;
+
+const modules = isBrowser ? false : 'commonjs'; // Use commonjs for Node
+
+// Use target configuration in package.json for browser builds.
+const targets = isBrowser ? undefined : { node: 'current' };
+
 const config = {
 	presets: [
 		[
 			'@babel/env',
 			{
-				targets: { browsers: [ 'last 2 versions', 'Safari >= 10', 'iOS >= 10', 'ie >= 11' ] },
+				modules,
+				targets,
 				useBuiltIns: 'entry',
 				// allows es7 features like Promise.prototype.finally
 				shippedProposals: true,
@@ -28,31 +39,30 @@ const config = {
 			},
 		],
 	],
-	overrides: [
-		{
-			test: './src',
+	env: {
+		build_pot: {
 			plugins: [
 				[
-					'@wordpress/import-jsx-pragma',
+					'@wordpress/babel-plugin-makepot',
 					{
-						scopeVariable: 'createElement',
-						source: '@wordpress/element',
-						isDefault: false,
+						output: 'build/i18n-calypso/gutenberg-strings.pot',
+						headers: {
+							'content-type': 'text/plain; charset=UTF-8',
+							'x-generator': 'calypso',
+						},
 					},
 				],
 				[
-					'@babel/transform-react-jsx',
+					'@automattic/babel-plugin-i18n-calypso',
 					{
-						pragma: 'createElement',
+						dir: 'build/i18n-calypso/',
+						headers: {
+							'content-type': 'text/plain; charset=UTF-8',
+							'x-generator': 'calypso',
+						},
 					},
 				],
 			],
-		},
-	],
-	env: {
-		test: {
-			presets: [ [ '@babel/env', { targets: { node: 'current' } } ] ],
-			plugins: [ 'add-module-exports', 'babel-plugin-dynamic-import-node' ],
 		},
 	},
 };
